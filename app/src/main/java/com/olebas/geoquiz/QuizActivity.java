@@ -12,6 +12,8 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.DecimalFormat;
+
 public class QuizActivity extends AppCompatActivity {
 
     private static final String TAG = "QuizActivity";
@@ -24,15 +26,17 @@ public class QuizActivity extends AppCompatActivity {
     private TextView mQuestionTextView;
 
     private Question[] mQuestionBank = new Question[] {
-            new Question(R.string.question_australia, true),
-            new Question(R.string.question_oceans, true),
-            new Question(R.string.question_mideast, false),
-            new Question(R.string.question_africa, false),
-            new Question(R.string.question_americas, true),
-            new Question(R.string.question_asia, true)
+            new Question(R.string.question_australia, true, false),
+            new Question(R.string.question_oceans, true, false),
+            new Question(R.string.question_mideast, false, false),
+            new Question(R.string.question_africa, false, false),
+            new Question(R.string.question_americas, true, false),
+            new Question(R.string.question_asia, true, false)
     };
 
     private int mCurrentIndex = 0;
+    private int rightAnswers = 0;
+    private int answers = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,7 @@ public class QuizActivity extends AppCompatActivity {
             public void onClick(View view) {
                 mCurrentIndex = (mCurrentIndex + 1) % mQuestionBank.length;
                 updateQuestion();
+                updateButtons();
             }
         });
 
@@ -76,6 +81,7 @@ public class QuizActivity extends AppCompatActivity {
             public void onClick(View view) {
                 mCurrentIndex = (mCurrentIndex + 1) % mQuestionBank.length;
                 updateQuestion();
+                updateButtons();
             }
         });
 
@@ -85,11 +91,11 @@ public class QuizActivity extends AppCompatActivity {
             public void onClick(View view) {
                 mCurrentIndex = (mCurrentIndex > 0) ? (mCurrentIndex - 1) : mQuestionBank.length - 1;
                 updateQuestion();
+                updateButtons();
             }
         });
 
         updateQuestion();
-
     }
 
     @Override
@@ -132,6 +138,13 @@ public class QuizActivity extends AppCompatActivity {
     private void updateQuestion() {
         int question = mQuestionBank[mCurrentIndex].getTextResId();
         mQuestionTextView.setText(question);
+
+        if (answers == mQuestionBank.length) {
+            DecimalFormat decimalFormat = new DecimalFormat("#.##");
+            double percent = ((double) rightAnswers / (double) mQuestionBank.length) * 100;
+            String rightAnswerPercent = decimalFormat.format(percent);
+            Toast.makeText(this, "Right answers: " + rightAnswerPercent + "%", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void checkAnswer(boolean userPressedTrue) {
@@ -140,10 +153,25 @@ public class QuizActivity extends AppCompatActivity {
 
         if (userPressedTrue == answerIsTrue) {
             messageResId = R.string.correct_toast;
+            rightAnswers++;
         } else {
             messageResId = R.string.incorrect_toast;
         }
-
+        answers++;
+        mQuestionBank[mCurrentIndex].setSolved(true);
+        updateButtons();
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateButtons() {
+        boolean isSolved = mQuestionBank[mCurrentIndex].isSolved();
+
+        if (isSolved) {
+            mTrueButton.setEnabled(false);
+            mFalseButton.setEnabled(false);
+        } else {
+            mTrueButton.setEnabled(true);
+            mFalseButton.setEnabled(true);
+        }
     }
 }
